@@ -33,54 +33,134 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   String url = "http://127.0.0.1:8080";
+  var currentSessionID;
   //late var url;
   final urlController = TextEditingController();
-  var inquiryRequestResult;
 
   void _setUrl(String e) {
-    print(url);
     setState(() {
       url = e;
     });
   }
 
+  @override
+  void initState() {
+    super.initState();
+    getCurrentSession(url);
+  }
+
   void sendAction(String action, String url) {
     //late var inquiryRequestResult;
     String url_ = url + "/start_action";
-    var request = new inquiryRequest(action: action);
-    final response = http.post(Uri.parse(url_),
-        body: json.encode(request.toJson()),
-        headers: {"Content-Type": "application/json"});
-    // if (response.statusCode == 200) {
+    var request = new actionRequest(action: action);
+    try {
+      final response = http.post(Uri.parse(url_),
+          body: json.encode(request.toJson()),
+          headers: {"Content-Type": "application/json"});
+    } catch (e) {}
+  }
+
+  void changeSession(String url) async {
+    //late var inquiryRequestResult;
+    String url_ = url + "/change_session";
+    Navigator.pop(context);
+    try {
+      final response = await http
+          .get(Uri.parse(url_), headers: {"Content-Type": "application/json"});
+      setState(() {
+        currentSessionID =
+            ApiResults.fromJson(json.decode(response.body)).toString();
+      });
+    } catch (e) {}
+  }
+
+  void getCurrentSession(String url) async {
+    //late var inquiryRequestResult;
+    String url_ = url + "/current_session";
+    // try {
+    //   final response = await http
+    //       .get(Uri.parse(url_), headers: {"Content-Type": "application/json"});
     //   setState(() {
-    //     inquiryRequestResult = ApiResults.fromJson(json.decode(response.body));
+    //     currentSessionID =
+    //         ApiResults.fromJson(json.decode(response.body)).toString();
     //   });
-    // } else {
-    //   throw Exception('Failed');
-    // }
+    // } catch (e) {}
+    final response = await http
+        .get(Uri.parse(url_), headers: {"Content-Type": "application/json"});
+    setState(() {
+      currentSessionID = response.body;
+    });
+  }
+
+  void stopAction(String url) {
+    //late var inquiryRequestResult;
+    String url_ = url + "/stop_action";
+    try {
+      final response = http.get(Uri.parse(url_));
+    } catch (e) {}
+  }
+
+  confirmSessionChange(String url) {
+    showDialog(
+        context: context,
+        builder: (context) =>
+            AlertDialog(title: Text("セッションを変えますか？"), actions: <Widget>[
+              GestureDetector(
+                child: Text('いいえ'),
+                onTap: () {
+                  Navigator.pop(context);
+                },
+              ),
+              GestureDetector(
+                child: Text('はい'),
+                onTap: () => changeSession(url),
+              ),
+            ]));
+  }
+
+  showCurrentSession() async {
+    showDialog(
+        context: context,
+        builder: (context) =>
+            AlertDialog(title: Text("現在のセッション"), actions: <Widget>[
+              GestureDetector(
+                child: Text('OK'),
+                onTap: () {
+                  Navigator.pop(context);
+                },
+              ),
+              Text(currentSessionID)
+            ]));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: Text(widget.title),
-        ),
+        appBar: AppBar(title: Text(widget.title), actions: [
+          IconButton(
+            icon: Icon(Icons.cached),
+            onPressed: () => confirmSessionChange(url),
+          ),
+          IconButton(
+            icon: Icon(Icons.stop),
+            onPressed: () => stopAction(url),
+          ),
+          IconButton(
+            icon: Icon(Icons.autorenew_sharp),
+            onPressed: () {
+              Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                      builder: (BuildContext context) => super.widget));
+            },
+            color: Colors.black,
+          ),
+        ]),
         body: Center(
           child: ListView(children: <Widget>[
             Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                // TextFormField(
-                //     enabled: true,
-                //     style: TextStyle(color: Colors.red),
-                //     obscureText: false,
-                //     maxLines: 1,
-                //     onSaved: (value) => () {
-                //           _setUrl(
-                //               '$value'); // this._formKey.currentState.save()でコールされる
-                //           print('$value');
-                //         }),
                 TextField(
                   decoration: InputDecoration(hintText: "Server Url"),
                   controller: urlController,
@@ -104,65 +184,61 @@ class _MyHomePageState extends State<MyHomePage> {
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
-                        onPressed: () {}, //sendAction("None", url),
+                        onPressed: () => sendAction("None", url),
                         child: Text("無し"))),
                 // Special Rooms
                 Container(
                   padding: EdgeInsets.only(top: 32),
-                  child: Text('風呂、トイレ等'),
+                  child: Text('----------------'),
                 ),
                 SizedBox(
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
-                      onPressed: () {}, //sendAction("bathing", url),
-                      child: Text('入浴'),
-                    )),
-                SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: () {}, //sendAction("toileting", url),
-                      child: Text('排泄'),
-                    )),
-                // Living Room activities
-                Container(
-                  padding: EdgeInsets.only(top: 32),
-                  child: Text('リビング'),
-                ),
-                SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: () {}, //sendAction("cooking", url),
+                      onPressed: () => sendAction("cooking", url),
                       child: Text('調理'),
                     )),
                 SizedBox(
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
-                      onPressed: () {}, //sendAction("eating", url),
+                      onPressed: () => sendAction("eating", url),
                       child: Text('食事'),
                     )),
                 SizedBox(
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
-                      onPressed: () {}, //sendAction("TV", url),
-                      child: Text('テレビ視聴'),
+                      onPressed: () => sendAction("bathing", url),
+                      child: Text('入浴'),
                     )),
-                //　Bed Room Activities
                 Container(
                   padding: EdgeInsets.only(top: 32),
-                  child: Text('寝室'),
+                  child: Text('----------------'),
                 ),
                 SizedBox(
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
-                      onPressed: () {}, //sendAction("sleeping", url),
+                      onPressed: () => sendAction("watchingTV", url),
+                      child: Text('テレビ視聴'),
+                    )),
+                SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: () => sendAction("toileting", url),
+                      child: Text('トイレ'),
+                    )),
+                SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: () => sendAction("sleeping", url),
                       child: Text('睡眠'),
                     )),
+                Text(url),
+                Text(currentSessionID.toString())
               ],
             ),
           ]), // This trailing comma makes auto-formatting nicer for build methods.
@@ -182,9 +258,9 @@ class ApiResults {
   }
 }
 
-class inquiryRequest {
+class actionRequest {
   final String action;
-  inquiryRequest({
+  actionRequest({
     this.action = '',
   });
   Map<String, dynamic> toJson() => {
