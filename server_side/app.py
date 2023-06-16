@@ -14,6 +14,10 @@ def main():
 #セッション終了
 @app.route('/change_session', methods=['GET'])
 def change_session():
+    check = record.check_action()
+
+    if not check:
+        record.stop_action()
     next_session = session.chage_session()
     return make_response(jsonify(next_session))
 
