@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:async';
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(const MyApp());
@@ -33,13 +34,23 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   String url = "http://127.0.0.1:8080";
+  final ipAddressKey = 'ip';
   var currentSessionID;
   //late var url;
   final urlController = TextEditingController();
 
-  void _setUrl(String e) {
+  void _setUrl(String e) async {
+    final prefs = await SharedPreferences.getInstance();
     setState(() {
       url = e;
+      prefs.setString(ipAddressKey, e);
+    });
+  }
+
+  void readIpAddress() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      url = prefs.getString(ipAddressKey)!;
     });
   }
 
@@ -47,6 +58,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     super.initState();
     getCurrentSession(url);
+    readIpAddress();
   }
 
   void sendAction(String action, String url) {
@@ -77,14 +89,6 @@ class _MyHomePageState extends State<MyHomePage> {
   void getCurrentSession(String url) async {
     //late var inquiryRequestResult;
     String url_ = url + "/current_session";
-    // try {
-    //   final response = await http
-    //       .get(Uri.parse(url_), headers: {"Content-Type": "application/json"});
-    //   setState(() {
-    //     currentSessionID =
-    //         ApiResults.fromJson(json.decode(response.body)).toString();
-    //   });
-    // } catch (e) {}
     final response = await http
         .get(Uri.parse(url_), headers: {"Content-Type": "application/json"});
     setState(() {
@@ -118,18 +122,19 @@ class _MyHomePageState extends State<MyHomePage> {
             ]));
   }
 
-  showCurrentSession() async {
+  showCurrentSession(String url) async {
+    getCurrentSession(url);
     showDialog(
         context: context,
         builder: (context) =>
             AlertDialog(title: Text("現在のセッション"), actions: <Widget>[
+              Text(currentSessionID),
               GestureDetector(
                 child: Text('OK'),
                 onTap: () {
                   Navigator.pop(context);
                 },
               ),
-              Text(currentSessionID)
             ]));
   }
 
@@ -146,14 +151,8 @@ class _MyHomePageState extends State<MyHomePage> {
             onPressed: () => stopAction(url),
           ),
           IconButton(
-            icon: Icon(Icons.autorenew_sharp),
-            onPressed: () {
-              Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                      builder: (BuildContext context) => super.widget));
-            },
-            color: Colors.black,
+            icon: Icon(Icons.stop),
+            onPressed: () => showCurrentSession(url),
           ),
         ]),
         body: Center(
