@@ -1,0 +1,18 @@
+[
+  {
+    "sessionID": 1,
+    "filename": "session1.csv"
+  },
+  {
+    "sessionID": 2,
+    "filename": "session2.csv"
+  },
+  {
+    "sessionID": 3,
+    "filename": "session3.csv"
+  },
+  {
+    "sessionID": 4,
+    "filename": "session4.csv"
+  }
+]
