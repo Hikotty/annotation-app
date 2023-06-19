@@ -14,5 +14,21 @@
   {
     "sessionID": 4,
     "filename": "session4.csv"
+  },
+  {
+    "sessionID": 5,
+    "filename": "session5.csv"
+  },
+  {
+    "sessionID": 6,
+    "filename": "session6.csv"
+  },
+  {
+    "sessionID": 7,
+    "filename": "session7.csv"
+  },
+  {
+    "sessionID": 8,
+    "filename": "session8.csv"
   }
 ]
