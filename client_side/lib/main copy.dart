@@ -1,263 +1,176 @@
-// import 'package:flutter/material.dart';
-// import 'package:http/http.dart' as http;
-// import 'dart:async';
-// import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'dart:async';
+import 'package:http/http.dart' as http;
 
-// void main() {
-//   runApp(const MyApp());
-// }
+void main() => runApp(MyApp());
 
-// class MyApp extends StatelessWidget {
-//   const MyApp({super.key});
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Experiment App',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: InitialScreen(),
+    );
+  }
+}
 
-//   // This widget is the root of your application.
-//   @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(
-//       title: 'Flutter Demo',
-//       theme: ThemeData(
-//         primarySwatch: Colors.blue,
-//       ),
-//       home: MyHomePage(title: 'Annotaion APP'),
-//     );
-//   }
-// }
+class InitialScreen extends StatefulWidget {
+  @override
+  _InitialScreenState createState() => _InitialScreenState();
+}
 
-// class MyHomePage extends StatefulWidget {
-//   const MyHomePage({super.key, required this.title});
+class _InitialScreenState extends State<InitialScreen> {
+  String? ipAddress;
 
-//   final String title;
-//   @override
-//   State<MyHomePage> createState() => _MyHomePageState();
-// }
+  void _navigateToScreen(Widget screen) {
+    Navigator.of(context).push(MaterialPageRoute(builder: (context) => screen));
+  }
 
-// class _MyHomePageState extends State<MyHomePage> {
-//   String url = "http://127.0.0.1:8080";
-//   late var currentSessionID;
-//   //late var url;
-//   final urlController = TextEditingController();
+  Future<void> _checkConnection() async {
+    String url;
+    if (ipAddress == null) {
+      // Get the IP from the input
+      // Assuming you have an TextEditingController for the TextField
+    } else {
+      url = 'http://$ipAddress:8000/confirm';
+      var response = await http.get(Uri.parse(url));
 
-//   void _setUrl(String e) {
-//     setState(() {
-//       url = e;
-//     });
-//   }
+      if (response.body == 'OK') {
+        showDialog(
+            context: context,
+            builder: (context) {
+              return AlertDialog(
+                content: Text('接続OK'),
+              );
+            });
+      }
+    }
+  }
 
-//   @override
-//   void initState() {
-//     super.initState();
-//     //getCurrentSession(url);
-//   }
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('初期画面')),
+      body: Column(
+        children: [
+          TextField(
+            onChanged: (value) {
+              ipAddress = value;
+            },
+            decoration: InputDecoration(labelText: 'IP Address'),
+          ),
+          ElevatedButton(
+              onPressed: () => _navigateToScreen(FirstExperimentScreen(ipAddress!)),
+              child: Text('前半実験')),
+          ElevatedButton(
+              onPressed: () => _navigateToScreen(SecondExperimentScreen(ipAddress!)),
+              child: Text('後半実験')),
+          ElevatedButton(onPressed: _checkConnection, child: Text('接続確認'))
+        ],
+      ),
+    );
+  }
+}
 
-//   void sendAction(String action, String url) {
-//     //late var inquiryRequestResult;
-//     String url_ = url + "/start_action";
-//     var request = new actionRequest(action: action);
-//     try {
-//       final response = http.post(Uri.parse(url_),
-//           body: json.encode(request.toJson()),
-//           headers: {"Content-Type": "application/json"});
-//     } catch (e) {}
-//   }
+class FirstExperimentScreen extends StatefulWidget {
+  final String ipAddress;
 
-//   void changeSession(String url) async {
-//     //late var inquiryRequestResult;
-//     String url_ = url + "/change_session";
-//     Navigator.pop(context);
-//     try {
-//       final response = await http
-//           .get(Uri.parse(url_), headers: {"Content-Type": "application/json"});
-//       setState(() {
-//         currentSessionID =
-//             ApiResults.fromJson(json.decode(response.body)).toString();
-//       });
-//     } catch (e) {}
-//   }
+  FirstExperimentScreen(this.ipAddress);
 
-//   void getCurrentSession(String url) async {
-//     //late var inquiryRequestResult;
-//     String url_ = url + "/current_session";
-//     Navigator.pop(context);
-//     try {
-//       final response = await http
-//           .get(Uri.parse(url_), headers: {"Content-Type": "application/json"});
-//       setState(() {
-//         currentSessionID =
-//             ApiResults.fromJson(json.decode(response.body)).toString();
-//       });
-//     } catch (e) {}
-//   }
+  @override
+  _FirstExperimentScreenState createState() => _FirstExperimentScreenState();
+}
 
-//   void stopAction(String url) {
-//     //late var inquiryRequestResult;
-//     String url_ = url + "/stop_action";
-//     try {
-//       final response = http.get(Uri.parse(url_));
-//     } catch (e) {}
-//   }
+class _FirstExperimentScreenState extends State<FirstExperimentScreen> {
+  late Timer _timer;
+  int _start = 300;
 
-//   confirmSessionChange(String url) {
-//     showDialog(
-//         context: context,
-//         builder: (context) =>
-//             AlertDialog(title: Text("セッションを変えますか？"), actions: <Widget>[
-//               GestureDetector(
-//                 child: Text('いいえ'),
-//                 onTap: () {
-//                   Navigator.pop(context);
-//                 },
-//               ),
-//               GestureDetector(
-//                 child: Text('はい'),
-//                 onTap: () => changeSession(url),
-//               ),
-//             ]));
-//   }
+  void startTimer() {
+    const oneSec = const Duration(seconds: 1);
+    _timer = new Timer.periodic(
+      oneSec,
+      (Timer timer) => setState(
+        () {
+          if (_start < 1) {
+            timer.cancel();
+          } else {
+            _start = _start - 1;
+          }
+        },
+      ),
+    );
+  }
 
-//   showCurrentSession() async {
-//     showDialog(
-//         context: context,
-//         builder: (context) =>
-//             AlertDialog(title: Text("現在のセッション"), actions: <Widget>[
-//               GestureDetector(
-//                 child: Text('OK'),
-//                 onTap: () {
-//                   Navigator.pop(context);
-//                 },
-//               ),
-//               Text(currentSessionID)
-//             ]));
-//   }
+  @override
+  void initState() {
+    super.initState();
+    startTimer();
+  }
 
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//         appBar: AppBar(title: Text(widget.title), actions: [
-//           IconButton(
-//             icon: Icon(Icons.cached),
-//             onPressed: () => confirmSessionChange(url),
-//           ),
-//           IconButton(
-//             icon: Icon(Icons.stop),
-//             onPressed: () => stopAction(url),
-//           ),
-//           IconButton(
-//               icon: Icon(Icons.query_builder),
-//               onPressed: () {} //=> showCurrentSession(),
-//               ),
-//         ]),
-//         body: Center(
-//           child: ListView(children: <Widget>[
-//             Column(
-//               mainAxisAlignment: MainAxisAlignment.center,
-//               children: <Widget>[
-//                 TextField(
-//                   decoration: InputDecoration(hintText: "Server Url"),
-//                   controller: urlController,
-//                 ),
-//                 ElevatedButton(
-//                   child: Text("設定"),
-//                   onPressed: () => _setUrl(urlController.text),
-//                 ),
-//                 Container(
-//                   padding: EdgeInsets.only(top: 32),
-//                   child: Text('その他'),
-//                 ),
-//                 SizedBox(
-//                     width: double.infinity,
-//                     height: 50,
-//                     child: ElevatedButton(
-//                       onPressed: () => sendAction("other", url),
-//                       child: Text('その他'),
-//                     )),
-//                 SizedBox(
-//                     width: double.infinity,
-//                     height: 50,
-//                     child: ElevatedButton(
-//                         onPressed: () => sendAction("None", url),
-//                         child: Text("無し"))),
-//                 // Special Rooms
-//                 Container(
-//                   padding: EdgeInsets.only(top: 32),
-//                   child: Text('風呂、トイレ等'),
-//                 ),
-//                 SizedBox(
-//                     width: double.infinity,
-//                     height: 50,
-//                     child: ElevatedButton(
-//                       onPressed: () => sendAction("bathing", url),
-//                       child: Text('入浴'),
-//                     )),
-//                 SizedBox(
-//                     width: double.infinity,
-//                     height: 50,
-//                     child: ElevatedButton(
-//                       onPressed: () => sendAction("toileting", url),
-//                       child: Text('排泄'),
-//                     )),
-//                 // Living Room activities
-//                 Container(
-//                   padding: EdgeInsets.only(top: 32),
-//                   child: Text('リビング'),
-//                 ),
-//                 SizedBox(
-//                     width: double.infinity,
-//                     height: 50,
-//                     child: ElevatedButton(
-//                       onPressed: () => sendAction("cooking", url),
-//                       child: Text('調理'),
-//                     )),
-//                 SizedBox(
-//                     width: double.infinity,
-//                     height: 50,
-//                     child: ElevatedButton(
-//                       onPressed: () => sendAction("eating", url),
-//                       child: Text('食事'),
-//                     )),
-//                 SizedBox(
-//                     width: double.infinity,
-//                     height: 50,
-//                     child: ElevatedButton(
-//                       onPressed: () => sendAction("watchingTV", url),
-//                       child: Text('テレビ視聴'),
-//                     )),
-//                 //　Bed Room Activities
-//                 Container(
-//                   padding: EdgeInsets.only(top: 32),
-//                   child: Text('寝室'),
-//                 ),
-//                 SizedBox(
-//                     width: double.infinity,
-//                     height: 50,
-//                     child: ElevatedButton(
-//                       onPressed: () => sendAction("sleeping", url),
-//                       child: Text('睡眠'),
-//                     )),
-//               ],
-//             ),
-//           ]), // This trailing comma makes auto-formatting nicer for build methods.
-//         ));
-//   }
-// }
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
 
-// class ApiResults {
-//   final String message;
-//   ApiResults({
-//     this.message = '',
-//   });
-//   factory ApiResults.fromJson(Map<String, dynamic> json) {
-//     return ApiResults(
-//       message: json['message'],
-//     );
-//   }
-// }
+  Future<void> _postAction(String action) async {
+    var url = 'http://${widget.ipAddress}:8000/start_action';
+    var response = await http.post(Uri.parse(url), body: {'action': action});
 
-// class actionRequest {
-//   final String action;
-//   actionRequest({
-//     this.action = '',
-//   });
-//   Map<String, dynamic> toJson() => {
-//         'action': action,
-//       };
-// }
+    String message;
+    if (response.body == 'success') {
+      message = '成功';
+    } else {
+      message = 'エラー';
+    }
+
+    showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            content: Text(message),
+          );
+        });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('前半実験画面')),
+      body: Column(
+        children: [
+          ElevatedButton(
+              onPressed: () async {
+                bool? result = await showDialog(
+                    context: context,
+                    builder: (context) {
+                      return AlertDialog(
+                        content: Text('行動を変えますか?'),
+                        actions: [
+                          TextButton(
+                              onPressed: () => Navigator.of(context).pop(true),
+                              child: Text('OK')),
+                          TextButton(
+                              onPressed: () => Navigator.of(context).pop(false),
+                              child: Text('Cancel'))
+                        ],
+                      );
+                    });
+
+                if (result == true) {
+                  _postAction('cooking');
+                }
+              },
+              child: Text('調理')),
+          // ... Add other buttons here ...
+          Text('Time: ${_start.toString()}')
+        ],
+      ),
+    );
+  }
+}
+
+// You can add the SecondExperimentScreen similarly...
